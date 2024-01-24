@@ -8,6 +8,8 @@ const port = 3500; // Set your desired port number
 
 app.use(cors());
 app.use(bodyParser.json());
+let lights = 0;
+let motot = 0;
 
 app.get("/temp", (req, res) => {
   const { key } = req.query;
@@ -22,7 +24,7 @@ app.get("/temp", (req, res) => {
 
 // Handle requests from frontend to control lights
 app.get("/control-lights", (req, res) => {
-  let lights = 0;
+  
   const lightsStatus = req.query.key;
   console.log(`Received lights status update: ${lightsStatus}`);
   if (lightsStatus == 0) {
@@ -38,7 +40,6 @@ app.get("/control-lights", (req, res) => {
 });
 
 app.get("/control-motor", (req, res) => {
-  let motor = 0;
   const motorStatus = req.query.key;
   console.log(`Received lights status update: ${motorStatus}`);
 
