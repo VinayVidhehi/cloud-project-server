@@ -34,8 +34,8 @@ app.get("/control-lights", (req, res) => {
     lights = 1;
     res.send({ message: "lights switched off", key: 1 });
   } else if (lightsStatus == 2) {
-    if (lights == 1) res.send({ key: true });
-    else res.send({ key: false });
+    if (lights == 1) res.json({ key: true });
+    else res.json({ key: false });
   }
 });
 
