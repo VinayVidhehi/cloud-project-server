@@ -43,7 +43,7 @@ app.get("/sensor-values", async (req, res) => {
   const newSensorData = new SensorData({
     temperature: parseFloat(temperature),
     humidity: parseFloat(humidity),
-    soilmoisture: parseFloat(soilmoisture),
+    soil_moisture: parseFloat(soilmoisture),
   });
 
   try {
