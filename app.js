@@ -1,15 +1,62 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 const axios = require("axios");
 const cors = require("cors");
 
 const app = express();
 const port = 3500; // Set your desired port number
 
+mongoose
+  .connect(
+    "mongodb+srv://Vinay:4556%40Devaraj@cluster0.tpgkfpg.mongodb.net/greenhouse"
+  )
+  .then(() => console.log("connected to databse"))
+  .catch((error) => console.log(error));
+
+  const sensorDataSchema = new mongoose.Schema({
+    temperature: Number,
+    humidity: Number,
+    soil_moisture: Number,
+    timestamp: { type: Date, default: Date.now }
+  });
+  
+  // Create a model based on the schema
+  const SensorData = mongoose.model("SensorData", sensorDataSchema);
+
+  const predictionSchema = new mongoose.Schema({
+    predicted_sunlight_reduction: Number,
+    timestamp : { type: Date, default: Date.now }
+  })
+
+  const SunlightData = mongoose.model("SunlightData", predictionSchema);
+
 app.use(cors());
 app.use(bodyParser.json());
 let lights = 0;
 let motot = 0;
+
+app.get("/sensor-values", async (req, res) => {
+  const { temperature, humidity, soilmoisture } = req.query;
+
+  // Create a new sensor data document
+  const newSensorData = new SensorData({
+    temperature: parseFloat(temperature),
+    humidity: parseFloat(humidity),
+    soilmoisture: parseFloat(soilmoisture),
+  });
+
+  try {
+    // Save the sensor data document to the database
+    await newSensorData.save();
+
+    // Respond to the ESP32 with a success message
+    res.status(200).json({ message: "Sensor values stored successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 app.get("/temp", (req, res) => {
   const { key } = req.query;
@@ -24,7 +71,6 @@ app.get("/temp", (req, res) => {
 
 // Handle requests from frontend to control lights
 app.get("/control-lights", (req, res) => {
-  
   const lightsStatus = req.query.key;
   console.log(`Received lights status update: ${lightsStatus}`);
   if (lightsStatus == 0) {
@@ -54,6 +100,23 @@ app.get("/control-motor", (req, res) => {
     else res.send({ key: false });
   }
 });
+
+app.get('/notifications', async (req, res) => {
+  try {
+    const response = await SunlightData.find().sort({ timestamp: -1 });
+
+      if (response) {
+          console.log("response is", response);
+          res.status(200).json({ message: "data fetched successfully", response });
+      } else {
+          res.status(404).json({ message: "No data found" });
+      }
+  } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
