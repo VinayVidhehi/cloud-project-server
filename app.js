@@ -9,7 +9,7 @@ const port = 3500; // Set your desired port number
 
 mongoose
   .connect(
-    "mongodb+srv://Vinay:4556%40Devaraj@cluster0.tpgkfpg.mongodb.net/greenhouse"
+    "mongodb+srv://vinay:somethingforcloud@cloud-project.pwk1tsn.mongodb.net/greenhouse"
   )
   .then(() => console.log("connected to databse"))
   .catch((error) => console.log(error));
