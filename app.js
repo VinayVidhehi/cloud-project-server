@@ -69,7 +69,7 @@ app.get("/sensor-values", async (req, res) => {
 app.get('/get-sensor-values', async (req, res) => {
   try {
     // Get the latest data from the MongoDB database
-    const latestData = await SensorData.findOne({}, { _id: 0, temperature: 1, humidity: 1 });
+    const latestData = await SensorData.findOne({}, { _id: 0, temperature: -1, humidity: -1 });
 
     // Ensure that the required fields are present
     if (!latestData || !('temperature' in latestData) || !('humidity' in latestData)) {
