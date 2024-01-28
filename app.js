@@ -125,7 +125,7 @@ app.get("/control-motor", (req, res) => {
 
 app.get('/notifications', async (req, res) => {
   try {
-    const response = await SunlightData.find().sort({ timestamp: -1 }).limit(6);
+    const response = await SunlightData.find().sort({ timestamp: -1 }).limit(5);
 
       if (response) {
           console.log("response is", response);
