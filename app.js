@@ -11,7 +11,7 @@ mongoose
   .connect(
     "mongodb+srv://vinay:somethingforcloud@cloud-project.pwk1tsn.mongodb.net/greenhouse"
   )
-  .then(() => console.log("connected to databse"))
+  .then(() => console.log("connected to database"))
   .catch((error) => console.log(error));
 
   const sensorDataSchema = new mongoose.Schema({
@@ -31,10 +31,18 @@ mongoose
 
   const SunlightData = mongoose.model("SunlightData", predictionSchema);
 
+  const actuatorSchema = new mongoose.Schema({
+    motor1: {type:Boolean, default:false},
+    motor2: {type:Boolean, default:false},
+    light1: {type:Boolean, default:false},
+    light2: {type:Boolean, default:false},
+    timestamp : { type: Date, default: Date.now }
+  })
+
+  const Actuators = mongoose.model("actuator", actuatorSchema);
+
 app.use(cors());
 app.use(bodyParser.json());
-let lights = 0;
-let motot = 0;
 
 app.get("/sensor-values", async (req, res) => {
   const { temperature, humidity, soilmoisture } = req.query;
@@ -80,48 +88,67 @@ app.get('/get-sensor-values', async (req, res) => {
   }
 });
 
-app.get("/temp", (req, res) => {
-  const { key } = req.query;
-  if (key == 1) {
-    console.log("valuesfrom esp32");
-    res.send({ message: "received temp", key: 1 });
-  } else {
-    console.log("req from farmer");
-    res.send({ temperature: 25 });
-  }
-});
+// app.get("/temp", async (req, res) => {
+
+//   const actuatorValue = new Actuators({
+//     light1:false,
+//     motor1:false,
+//   })
+//   const response = await actuatorValue.save();
+//   console.log(response);
+//   res.send({message:"done"});
+// });
 
 // Handle requests from frontend to control lights
-app.get("/control-lights", (req, res) => {
-  const lightsStatus = req.query.key;
+
+app.get("/control-lights", async (req, res) => {
+  const lightsStatus = req.query.status;
   console.log(`Received lights status update: ${lightsStatus}`);
-  if (lightsStatus == 0) {
-    lights = 0;
-    res.send({ message: "lights switched off", key: 0 });
-  } else if (lightsStatus == 1) {
-    lights = 1;
-    res.send({ message: "lights switched off", key: 1 });
-  } else if (lightsStatus == 2) {
-    if (lights == 1) res.json({ key: true });
-    else res.json({ key: false });
+  
+  try {
+    if (lightsStatus === '0') {
+      await Actuators.updateOne({}, { $set: { light1: false } });
+      res.send({ message: "Lights switched off", key: 0 });
+    } else if (lightsStatus === '1') {
+      await Actuators.updateOne({}, { $set: { light1: true } });
+      res.send({ message: "Lights switched on", key: 1 });
+    } else {
+      res.status(400).send({ message: "Invalid lights status" });
+    }
+  } catch (error) {
+    console.error("Error updating lights status:", error);
+    res.status(500).send({ message: "Internal server error" });
   }
 });
 
-app.get("/control-motor", (req, res) => {
-  const motorStatus = req.query.key;
-  console.log(`Received lights status update: ${motorStatus}`);
 
-  if (motorStatus == 0) {
-    motor = 0;
-    res.send({ message: "lights switched off", key: 0 });
-  } else if (motorStatus == 1) {
-    motor = 1;
-    res.send({ message: "lights switched off", key: 1 });
-  } else if (motorStatus == 2) {
-    if (motor == 1) res.send({ key: true });
-    else res.send({ key: false });
+app.get("/control-motor", async (req, res) => {
+  const motorStatus = req.query.status;
+  console.log(`Received motor status update: ${motorStatus}`);
+   
+  try {
+    if (motorStatus == '0') {
+      await Actuators.updateOne({}, { $set: { motor1: false } });
+      res.send({ message: "Motor switched off", key: 0 });
+    } else if (motorStatus == '1') {
+      await Actuators.updateOne({}, { $set: { motor1: true } });
+      res.send({ message: "Motor switched on", key: 1 });
+    } else {
+      res.status(400).send({ message: "Invalid motor status" });
+    }
+  } catch (error) {
+    console.error("Error updating motor status:", error);
+    res.status(500).send({ message: "Internal server error" });
   }
 });
+
+
+app.get('/farmhouse-controller', async(req, res) => {
+     const response = await Actuators.findOne({});
+     console.log("light value is ", response.motor1);
+     const key = JSON.stringify(response.light1);
+     res.json({key});
+})
 
 app.get('/notifications', async (req, res) => {
   try {
